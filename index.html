@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدارس التعلم ثنائي اللغة</title>
+    <title>مدارس التعلم ثنائي اللغة الأهلية</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -12,6 +12,7 @@
             --search-color: #2980b9;
             --update-color: #f39c12;
             --delete-color: #e74c3c;
+            --transfer-color: #8e44ad;
             --bg-color: #f4f7f6;
         }
         body {
@@ -28,19 +29,67 @@
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 650px;
+            max-width: 700px;
         }
-        h1 { text-align: center; color: var(--primary-color); margin-bottom: 5px; }
-        h2 { text-align: center; color: #7f8c8d; font-size: 16px; margin-top: 0; margin-bottom: 30px; }
         
+        /* تنسيق الهوية البصرية (اللوجو والعناوين) */
+        .school-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .school-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            /* استبدل الرابط أدناه برابط شعار المدرسة الحقيقي */
+            content: url('https://via.placeholder.com/100?text=Logo'); 
+        }
+        h1 { color: var(--primary-color); margin: 0 0 5px 0; font-size: 24px; }
+        .location { color: var(--secondary-color); font-size: 14px; margin: 0 0 10px 0; font-weight: bold; }
+        h2 { color: #7f8c8d; font-size: 16px; margin: 0; }
+        
+        /* تنسيق الأزرار العلوية */
+        .buttons-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        button:hover { opacity: 0.9; }
+        button:active { transform: scale(0.98); }
+        
+        .btn-add { background-color: var(--add-color); }
+        .btn-update { background-color: var(--update-color); }
+        .btn-delete { background-color: var(--delete-color); }
+        .btn-transfer { background-color: var(--transfer-color); }
+        .btn-search-id { background-color: var(--search-color); }
+        .btn-search-name { background-color: var(--search-color); }
+
+        /* تنسيق الحقول */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
         .full-width { grid-column: span 2; }
-        
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 5px; }
         label { display: block; margin-bottom: 8px; color: var(--secondary-color); font-weight: 600; font-size: 14px; }
         label span { color: red; } 
         
@@ -59,7 +108,6 @@
             box-shadow: 0 0 5px rgba(41, 128, 185, 0.3);
         }
 
-        /* تنسيق خاص لحقل اسم الصف كاملاً */
         #fullClassName {
             background-color: #ecf0f1;
             color: var(--primary-color);
@@ -70,33 +118,6 @@
             border: 1px dashed #bdc3c7;
         }
 
-        .buttons-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 25px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            transition: opacity 0.2s;
-        }
-        button:hover { opacity: 0.9; }
-        
-        .btn-add { background-color: var(--add-color); }
-        .btn-search-id { background-color: var(--search-color); }
-        .btn-search-name { background-color: var(--search-color); }
-        .btn-update { background-color: var(--update-color); display: none; }
-        .btn-delete { background-color: var(--delete-color); display: none; }
-        
         .status-msg {
             margin-top: 20px;
             padding: 12px;
@@ -108,7 +129,7 @@
         .success { background-color: #d4edda; color: #155724; display: block; }
         .error { background-color: #f8d7da; color: #721c24; display: block; }
 
-        @media (max-width: 500px) {
+        @media (max-width: 600px) {
             .form-grid, .buttons-container { grid-template-columns: 1fr; }
             .full-width { grid-column: span 1; }
         }
@@ -117,11 +138,25 @@
 <body>
 
 <div class="form-container">
-    <h1>مدارس التعلم ثنائي اللغة</h1>
-    <h2>نظام إدارة وتسكين الطلاب</h2>
+    <!-- الهوية البصرية -->
+    <div class="school-header">
+        <h1>مدارس التعلم ثنائي اللغة الأهلية</h1>
 
+        <h2>نظام إدارة وتسكين الطلاب</h2>
+    </div>
+
+    <!-- الأزرار في الأعلى -->
+    <div class="buttons-container">
+        <button type="button" class="btn-add" onclick="addStudent()">إضافة طالب جديد</button>
+        <button type="button" class="btn-update" onclick="updateStudent()">تحديث البيانات</button>
+        <button type="button" class="btn-delete" onclick="deleteStudent()">حذف الطالب</button>
+        <button type="button" class="btn-transfer" onclick="transferStudent()">نقل طالب</button>
+        <button type="button" class="btn-search-id" onclick="searchStudent('id')">بحث برقم الهوية</button>
+        <button type="button" class="btn-search-name" onclick="searchStudent('name')">بحث باسم الطالب</button>
+    </div>
+
+    <!-- الحقول (بدون أي تغيير في الأسماء) -->
     <div class="form-grid">
-        <!-- الحقول الإلزامية -->
         <div class="form-group full-width">
             <label>اسم الطالب <span>*</span></label>
             <input type="text" id="studentName" placeholder="أدخل اسم الطالب الرباعي" required>
@@ -153,13 +188,9 @@
                 <option value="">اختر المرحلة الدراسية أولاً...</option>
             </select>
         </div>
-
-        <!-- الحقول غير الإلزامية (التسكين) -->
         <div class="form-group">
             <label>الفصل</label>
-            <select id="classNumber">
-                <!-- سيتم تعبئتها ديناميكياً بالأرقام العربية -->
-            </select>
+            <select id="classNumber"></select>
         </div>
         <div class="form-group">
             <label>المسار</label>
@@ -168,8 +199,6 @@
                 <option value="تحفيظ">تحفيظ</option>
             </select>
         </div>
-        
-        <!-- حقل اسم الصف كاملاً (يتم توليده تلقائياً) -->
         <div class="form-group full-width">
             <label>اسم الصف كاملاً</label>
             <input type="text" id="fullClassName" readonly placeholder="سيظهر اسم الصف هنا تلقائياً..." tabindex="-1">
@@ -178,47 +207,29 @@
 
     <!-- رسائل النظام -->
     <div id="statusMessage" class="status-msg"></div>
-
-    <!-- الأزرار -->
-    <div class="buttons-container">
-        <button type="button" class="btn-add full-width" id="btnAdd" onclick="addStudent()">إضافة طالب جديد</button>
-        <button type="button" class="btn-search-id" onclick="searchStudent('id')">بحث برقم الهوية</button>
-        <button type="button" class="btn-search-name" onclick="searchStudent('name')">بحث باسم الطالب</button>
-        <button type="button" class="btn-update" id="btnUpdate" onclick="updateStudent()">تحديث بيانات الطالب</button>
-        <button type="button" class="btn-delete" id="btnDelete" onclick="deleteStudent()">حذف الطالب</button>
-    </div>
 </div>
 
 <script>
-    const N8N_WEBHOOK_URL = "http://localhost:5678/webhook-test/student-api";
-    
+    const N8N_WEBHOOK_URL = "https://your-n8n-instance.com/webhook/student-api";
 
-    // -------------------------------------------------------------
-    // دالة تحويل الأرقام الإنجليزية إلى عربية
-    // -------------------------------------------------------------
     const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     function toArabicNumerals(num) {
         return String(num).replace(/[0-9]/g, w => arabicNumbers[+w]);
     }
 
-    // -------------------------------------------------------------
-    // تهيئة القوائم وعمليات التحديث التلقائي
-    // -------------------------------------------------------------
     const stageSelect = document.getElementById('stage');
     const gradeSelect = document.getElementById('grade');
     const classNumberSelect = document.getElementById('classNumber');
     const trackSelect = document.getElementById('track');
     const fullClassNameInput = document.getElementById('fullClassName');
 
-    // 1. تعبئة قائمة الفصول من 1 إلى 10 بدون كلمة "الفصل" وبالأرقام العربية
     for (let i = 1; i <= 10; i++) {
         const option = document.createElement('option');
-        option.value = i; // القيمة الحقيقية المرسلة لـ n8n
-        option.textContent = toArabicNumerals(i); // القيمة المعروضة للمستخدم
+        option.value = i; 
+        option.textContent = toArabicNumerals(i); 
         classNumberSelect.appendChild(option);
     }
 
-    // 2. تحديث قائمة الصفوف بدون كلمة "الصف"
     stageSelect.addEventListener('change', function() {
         gradeSelect.innerHTML = '<option value="">اختر الصف...</option>';
         const stage = this.value;
@@ -231,30 +242,24 @@
         for (let i = 0; i < maxGrade; i++) {
             gradeSelect.innerHTML += `<option value="${i+1}">${gradeNames[i]}</option>`;
         }
-        updateFullClassName(); // تفريغ أو تحديث حقل الاسم كاملاً
+        updateFullClassName();
     });
 
-    // 3. دالة توليد "اسم الصف كاملاً"
     function updateFullClassName() {
         if (gradeSelect.value && classNumberSelect.value && trackSelect.value) {
             const gradeText = gradeSelect.options[gradeSelect.selectedIndex].text;
-            const classText = classNumberSelect.options[classNumberSelect.selectedIndex].text; // ستأتي بالعربية
+            const classText = classNumberSelect.options[classNumberSelect.selectedIndex].text; 
             const trackText = trackSelect.options[trackSelect.selectedIndex].text;
-            
             fullClassNameInput.value = `${gradeText} / ${classText} ${trackText}`;
         } else {
             fullClassNameInput.value = '';
         }
     }
 
-    // ربط الدالة بأي تغيير يحدث في القوائم الثلاثة
     gradeSelect.addEventListener('change', updateFullClassName);
     classNumberSelect.addEventListener('change', updateFullClassName);
     trackSelect.addEventListener('change', updateFullClassName);
 
-    // -------------------------------------------------------------
-    // دوال مساعدة
-    // -------------------------------------------------------------
     function getFormData() {
         return {
             studentName: document.getElementById('studentName').value,
@@ -264,7 +269,7 @@
             grade: document.getElementById('grade').value,
             classNumber: document.getElementById('classNumber').value,
             track: document.getElementById('track').value,
-            fullClassName: document.getElementById('fullClassName').value // اختياري: نرسله لـ n8n كقيمة جاهزة للطباعة
+            fullClassName: document.getElementById('fullClassName').value 
         };
     }
 
@@ -275,26 +280,14 @@
         setTimeout(() => { msgDiv.style.display = 'none'; msgDiv.className = 'status-msg'; }, 5000);
     }
 
-    function toggleActionButtons(show) {
-        document.getElementById('btnUpdate').style.display = show ? 'block' : 'none';
-        document.getElementById('btnDelete').style.display = show ? 'block' : 'none';
-        document.getElementById('btnAdd').style.display = show ? 'none' : 'block';
-    }
-
-    // -------------------------------------------------------------
-    // دوال جلب البيانات وإرسالها إلى n8n
-    // -------------------------------------------------------------
-
-    // 1. إضافة طالب (POST)
+    // 1. الإضافة
     async function addStudent() {
         const data = getFormData();
         if(!data.studentName || !data.nationalId || !data.section || !data.stage || !data.grade) {
             showMessage("الرجاء تعبئة جميع الحقول الإلزامية!", false);
             return;
         }
-
         data.action = "add"; 
-
         try {
             const response = await fetch(N8N_WEBHOOK_URL, {
                 method: 'POST',
@@ -303,14 +296,13 @@
             });
             showMessage("تمت الإضافة إلى النظام بنجاح!", true);
             document.querySelectorAll('input:not([readonly]), select').forEach(el => el.value = ''); 
-            updateFullClassName(); // تصفير حقل الصف المجمع
+            updateFullClassName();
         } catch (error) {
-            console.error(error);
             showMessage("حدث خطأ أثناء الإضافة", false);
         }
     }
 
-    // 2. البحث (GET)
+    // 2. البحث
     async function searchStudent(type) {
         const data = getFormData();
         const url = new URL(N8N_WEBHOOK_URL);
@@ -327,8 +319,10 @@
 
         try {
             const response = await fetch(url.toString(), { method: 'GET' });
-            const result = await response.json(); 
+            let result = await response.json(); 
             
+            if (Array.isArray(result) && result.length > 0) result = result[0];
+
             if(result && result.studentName) {
                 document.getElementById('studentName').value = result.studentName;
                 document.getElementById('nationalId').value = result.nationalId;
@@ -340,26 +334,21 @@
                 document.getElementById('classNumber').value = result.classNumber || '1';
                 document.getElementById('track').value = result.track || 'عام';
 
-                // تشغيل دالة بناء حقل الاسم كاملاً بناءً على البيانات المسترجعة
                 updateFullClassName();
-
                 showMessage("تم العثور على بيانات الطالب", true);
-                toggleActionButtons(true);
             } else {
                 showMessage("لم يتم العثور على الطالب", false);
-                toggleActionButtons(false);
             }
         } catch (error) {
-            console.error(error);
             showMessage("حدث خطأ أثناء البحث، تأكد من إعدادات n8n", false);
         }
     }
 
-    // 3. تحديث بيانات طالب (POST)
+    // 3. التحديث
     async function updateStudent() {
         const data = getFormData();
+        if(!data.nationalId) return showMessage("رقم الهوية مطلوب للتحديث", false);
         data.action = "update";
-
         try {
             const response = await fetch(N8N_WEBHOOK_URL, {
                 method: 'POST',
@@ -368,16 +357,16 @@
             });
             showMessage("تم تحديث بيانات الطالب بنجاح!", true);
         } catch (error) {
-            console.error(error);
             showMessage("حدث خطأ أثناء التحديث", false);
         }
     }
 
-    // 4. حذف طالب (POST)
+    // 4. الحذف
     async function deleteStudent() {
+        const nationalId = document.getElementById('nationalId').value;
+        if(!nationalId) return showMessage("رقم الهوية مطلوب للحذف", false);
         if(!confirm("هل أنت متأكد من حذف بيانات هذا الطالب نهائياً؟")) return;
         
-        const nationalId = document.getElementById('nationalId').value;
         try {
             const response = await fetch(N8N_WEBHOOK_URL, {
                 method: 'POST',
@@ -385,13 +374,28 @@
                 body: JSON.stringify({ action: "delete", nationalId: nationalId }) 
             });
             showMessage("تم حذف بيانات الطالب بنجاح!", true);
-            
             document.querySelectorAll('input:not([readonly]), select').forEach(el => el.value = '');
-            updateFullClassName(); // تصفير الحقل المجمع
-            toggleActionButtons(false);
+            updateFullClassName();
         } catch (error) {
-            console.error(error);
             showMessage("حدث خطأ أثناء الحذف", false);
+        }
+    }
+
+    // 5. نقل الطالب
+    async function transferStudent() {
+        const data = getFormData();
+        if(!data.nationalId) return showMessage("رقم الهوية مطلوب لنقل الطالب", false);
+        data.action = "transfer"; // يتم إرسال أمر transfer إلى n8n
+        
+        try {
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data) 
+            });
+            showMessage("تم إرسال طلب نقل الطالب بنجاح!", true);
+        } catch (error) {
+            showMessage("حدث خطأ أثناء إرسال طلب النقل", false);
         }
     }
 </script>
