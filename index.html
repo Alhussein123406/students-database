@@ -250,9 +250,9 @@
         <div class="form-content">
             <form id="searchForm" onsubmit="searchStudent(event)">
                 <div class="form-group">
-                    <label>ابحث برقم الهوية أو اسم الطالب</label>
+                    <label>ابحث برقم الهوية</label>
                     <div class="row" style="gap: 0;">
-                        <input type="text" id="searchQuery" class="form-control" placeholder="أدخل رقم الهوية أو الاسم..." style="border-radius: 0 8px 8px 0;" required>
+                        <input type="number" id="searchQuery" class="form-control" placeholder="أدخل رقم الهوية..." style="border-radius: 0 8px 8px 0;" required>
                         <button type="submit" class="btn btn-secondary" style="border-radius: 8px 0 0 8px; flex: 0.3;">بحث</button>
                     </div>
                 </div>
@@ -262,7 +262,6 @@
                 <h3 style="color: var(--primary-color); margin-bottom: 1rem;">بيانات الطالب المسترجعة</h3>
                 <form id="editStudentForm" onsubmit="submitForm(event, 'update_student')">
                     <input type="hidden" name="original_id" id="edit_original_id">
-                    <input type="hidden" name="target_table" value="students">
                     <div class="row">
                         <div class="form-group col">
                             <label>الاسم</label>
@@ -281,6 +280,7 @@
                             </select>
                         </div>
                     </div>
+                    
                     <div class="form-actions">
                         <button type="submit" class="btn btn-success">حفظ التعديلات</button>
                         <button type="button" class="btn btn-danger" onclick="deleteStudent()">حذف الطالب نهائياً</button>
@@ -411,10 +411,11 @@
             </div>
         </form>
     </div>
-
 </div>
 
 <script>
+    // رابط الـ Webhook الفعلي (الخاص بـ n8n) 
+    // ملاحظة: إذا كنت تستخدم n8n في وضع الإنتاج، قم بتغيير 'webhook-test' إلى 'webhook'
     const WEBHOOK_URL = 'http://localhost:5678/webhook-test/bcdf3a0a-caa3-4259-8936-6cbf40b75699';
     
     let adminToken = sessionStorage.getItem('adminToken') || null;
@@ -425,6 +426,9 @@
         updateUI();
     });
 
+    // -----------------------------------------
+    // وظائف الواجهة والأمان الأساسية
+    // -----------------------------------------
     function updateUI() {
         const btn = document.getElementById('adminToggleBtn');
         const userInfo = document.getElementById('userInfo');
@@ -511,7 +515,22 @@
         hideAlert();
     }
 
+    function showAlert(message, type) {
+        const alertEl = document.getElementById('mainAlert');
+        alertEl.innerText = message;
+        alertEl.className = 'alert ' + (type === 'success' ? 'alert-success' : 'alert-error');
+        alertEl.style.display = 'block';
+        setTimeout(hideAlert, 5000);
+    }
+
+    function hideAlert() { document.getElementById('mainAlert').style.display = 'none'; }
+
+
+    // -----------------------------------------
+    // وظيفة الاتصال الحقيقي بـ Data Table عبر n8n
+    // -----------------------------------------
     async function sendRequestToN8n(payload) {
+        // التحقق من الصلاحيات
         if (!userToken && !adminToken) {
             if (!ensureUserName()) return null;
             const pass = prompt('النظام محمي. الرجاء إدخال كلمة مرور الدخول للنظام:');
@@ -522,25 +541,15 @@
         }
 
         if (!payload.data) payload.data = {};
-        if (userToken) payload.data.user_password = userToken;
-        if (adminToken) payload.data.admin_password = adminToken;
-        if (userName) payload.data.user_name = userName;
-
-        if (!WEBHOOK_URL || WEBHOOK_URL.trim() === '' || WEBHOOK_URL.includes('YOUR_N8N')) {
-            await new Promise(resolve => setTimeout(resolve, 600));
-            
-            if (payload.action === 'search_student') {
-                return {
-                    id: payload.data.query,
-                    name: "طالب تجريبي (محمد أحمد)",
-                    gender: "بنين",
-                    target_table: "students"
-                };
-            }
-            return { success: true };
-        }
+        
+        // إرفاق معلومات المستخدم مع كل طلب لغرض التوثيق في قاعدة البيانات (Log)
+        payload.data.user_password = userToken;
+        payload.data.admin_password = adminToken;
+        payload.data.user_name = userName;
+        payload.data.target_table = 'students'; 
 
         try {
+            // إرسال الطلب (POST) الفعلي للـ Webhook
             const response = await fetch(WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -550,6 +559,7 @@
             if (response.ok) {
                 const data = await response.json();
                 
+                // في حال أرسل الـ n8n رسالة خطأ (مثلاً: كلمة مرور المشرف خاطئة)
                 if (data.error) {
                     showAlert(data.error, 'error');
                     if (data.error.includes('المشرف')) {
@@ -565,20 +575,27 @@
                     return null; 
                 }
 
-                if(payload.action !== 'search_student') showAlert('تمت العملية بنجاح (عبر الخادم)!', 'success');
                 return data;
             } else {
-                showAlert('حدث خطأ في الاتصال بالسيرفر.', 'error');
+                showAlert('خطأ في الاتصال بالخادم. يرجى التأكد من تشغيل n8n.', 'error');
+                return null;
             }
         } catch (error) {
-            console.error('Error:', error);
-            showAlert('فشل الاتصال بـ n8n.', 'error');
+            console.error('Error connecting to Webhook:', error);
+            showAlert('فشل الاتصال بخادم قاعدة البيانات.', 'error');
+            return null;
         }
     }
 
+
+    // -----------------------------------------
+    // التعامل مع الأزرار والنماذج 
+    // (إضافة، تعديل، نقل طالب، ترحيل فصل)
+    // -----------------------------------------
     async function submitForm(event, actionType) {
         event.preventDefault();
         
+        // طلب صلاحية المشرف عند عملية الإضافة
         if (actionType === 'add_student' && !adminToken) {
             if (!ensureUserName()) return;
             const pass = prompt('عملية الإضافة تتطلب صلاحيات مشرف.\nالرجاء إدخال الرقم السري للمشرف:');
@@ -589,12 +606,11 @@
         }
 
         const form = event.target;
+        // استخراج جميع البيانات من الحقول بناءً على الـ (name) لكل حقل
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
-        // تعيين اسم الجدول الموحد لكل العمليات
-        data.target_table = 'students';
-
+        // ترتيب أسماء الفصول بشكل منسق قبل إرسالها لقاعدة البيانات
         if(data.grade && data.section && data.track) {
             data.full_class_name = `${data.grade} / ${data.section} ${data.track}`;
         }
@@ -608,61 +624,92 @@
             data.target_full_class_name = `${data.target_grade} / ${data.target_section} ${data.target_track}`;
         }
 
-        const payload = { action: actionType, data: data };
+        // إعداد هيكل البيانات ليتم إرسالها للـ Webhook
+        const payload = { 
+            action: actionType, 
+            data: data 
+        };
 
+        // تعطيل الزر مؤقتاً لتجنب الضغط المزدوج
         const btn = form.querySelector('button[type="submit"]');
         const originalText = btn.innerText;
         btn.innerText = 'جاري التنفيذ...';
         btn.disabled = true;
 
+        // إرسال الطلب
         const response = await sendRequestToN8n(payload);
 
+        // إعادة تفعيل الزر
         btn.innerText = originalText;
         btn.disabled = false;
         
         if (response) {
-            if (actionType !== 'update_student') {
-                showAlert('تمت العملية بنجاح (الوضع التجريبي)', 'success');
+            if (actionType === 'add_student') {
+                showAlert('تم تسجيل وإضافة الطالب إلى قاعدة البيانات بنجاح!', 'success');
                 form.reset();
-            } else {
-                showAlert('تم تحديث بيانات الطالب بنجاح (الوضع التجريبي)', 'success');
+            } else if (actionType === 'update_student') {
+                showAlert('تم تحديث بيانات الطالب بنجاح!', 'success');
                 document.getElementById('searchResultArea').style.display = 'none';
+            } else if (actionType === 'transfer_student') {
+                showAlert('تم نقل الطالب إلى الفصل الجديد بنجاح!', 'success');
+                form.reset();
+            } else if (actionType === 'transfer_class') {
+                showAlert('تم ترحيل جميع طلاب الفصل بنجاح!', 'success');
+                form.reset();
             }
         }
     }
 
+
+    // -----------------------------------------
+    // وظيفة البحث عن طالب
+    // -----------------------------------------
     async function searchStudent(event) {
         event.preventDefault();
         const query = document.getElementById('searchQuery').value;
-        const payload = { action: 'search_student', data: { query: query, target_table: 'students' } };
+        
+        // إعداد بيانات الطلب (مهمة البحث عن طريق الهوية)
+        const payload = { 
+            action: 'search_student', 
+            data: { national_id: query } 
+        };
         
         const btn = event.target.querySelector('button[type="submit"]');
         const originalText = btn.innerText;
-        btn.innerText = 'جاري...';
+        btn.innerText = 'جاري البحث...';
         btn.disabled = true;
 
+        // إرسال الطلب إلى n8n
         const responseData = await sendRequestToN8n(payload);
         
         btn.innerText = originalText;
         btn.disabled = false;
 
-        if(responseData && responseData.id && responseData.name) {
-            document.getElementById('edit_original_id').value = responseData.id;
-            document.getElementById('edit_name').value = responseData.name;
-            document.getElementById('edit_id').value = responseData.id;
+        // إذا عاد n8n ببيانات الطالب (تأكد أن n8n يُرجع JSON يحتوي على name و national_id)
+        if(responseData && responseData.student_name) {
+            // تعبئة حقول التعديل بالبيانات المسترجعة من قاعدة البيانات
+            document.getElementById('edit_original_id').value = responseData.national_id; // المرجع الأصلي للتعديل
+            document.getElementById('edit_name').value = responseData.student_name;
+            document.getElementById('edit_id').value = responseData.national_id;
             
             if(responseData.gender) {
                 document.getElementById('edit_gender').value = responseData.gender;
             }
             
+            // إظهار قسم التعديل
             document.getElementById('searchResultArea').style.display = 'block';
             showAlert('تم العثور على بيانات الطالب بنجاح', 'success');
-        } else if (responseData) {
-            showAlert('لم يتم العثور على بيانات مطابقة', 'error');
+            
+        } else {
+            showAlert('لم يتم العثور على طالب يطابق هذا الرقم في قاعدة البيانات', 'error');
             document.getElementById('searchResultArea').style.display = 'none';
         }
     }
 
+
+    // -----------------------------------------
+    // وظيفة حذف طالب نهائياً
+    // -----------------------------------------
     async function deleteStudent() {
         if (!adminToken) {
             if (!ensureUserName()) return;
@@ -673,31 +720,22 @@
             updateUI();
         }
 
-        if(confirm('تحذير: هل أنت متأكد من حذف هذا الطالب بشكل نهائي؟')) {
+        if(confirm('تحذير: هل أنت متأكد من حذف هذا الطالب بشكل نهائي من قاعدة البيانات؟')) {
             const studentId = document.getElementById('edit_original_id').value;
             
             const response = await sendRequestToN8n({ 
                 action: 'delete_student', 
-                data: { student_id: studentId, target_table: 'students' } 
+                data: { national_id: studentId } 
             });
             
             if(response) {
-                showAlert('تم حذف الطالب بنجاح (الوضع التجريبي)', 'success');
+                showAlert('تم حذف بيانات الطالب نهائياً!', 'success');
                 document.getElementById('searchResultArea').style.display = 'none';
                 document.getElementById('searchQuery').value = '';
             }
         }
     }
 
-    function showAlert(message, type) {
-        const alertEl = document.getElementById('mainAlert');
-        alertEl.innerText = message;
-        alertEl.className = 'alert ' + (type === 'success' ? 'alert-success' : 'alert-error');
-        alertEl.style.display = 'block';
-        setTimeout(hideAlert, 5000);
-    }
-
-    function hideAlert() { document.getElementById('mainAlert').style.display = 'none'; }
 </script>
 
 </body>
